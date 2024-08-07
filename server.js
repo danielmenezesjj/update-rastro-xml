@@ -6,16 +6,11 @@ const { DOMParser, XMLSerializer } = require('xmldom');
 const app = express();
 const port = 1290;
 
-// Adiciona o middleware cors
 app.use(cors());
-
-// Serve arquivos estáticos da pasta 'public'
 app.use(express.static('public'));
 
-// Configura o multer para lidar com o upload de arquivos
 const upload = multer();
 
-// Função para converter a data no formato YYYY-MM-DD
 const formatDate = (dateStr) => {
   if (typeof dateStr !== 'string') {
     console.error('Data fornecida não é uma string:', dateStr);
@@ -55,34 +50,39 @@ app.post('/process-xml', upload.single('file'), (req, res) => {
       console.log('Conteúdo de infAdProd:', infAdProdText);
 
       // Extrai as informações de infAdProd usando regex
-      const regex = /Lote:\s*(.*?)\s*Quantidade:\s*(.*?)\s*Fabricacao:\s*(.*?)\s*Validade:\s*(.*)/;
+      const regex = /Lote:\s*(.*?)\s*Quantidade:\s*(\S+)(?:\s*Fabricacao:\s*(\d{2}\/\d{2}\/\d{4}))?(?:\s*Validade:\s*(\d{2}\/\d{2}\/\d{4}))?/;
       const match = infAdProdText.match(regex);
       if (match) {
         const rastroData = {
           nLote: match[1] || '',
           qLote: match[2] || '',
-          dFab: formatDate(match[3] || ''),
-          dVal: formatDate(match[4] || '')
+          dFab: match[3] ? formatDate(match[3]) : '',
+          dVal: match[4] ? formatDate(match[4]) : ''
         };
 
         console.log('Dados extraídos para rastro:', rastroData);
 
-        // Encontra a tag <prod> dentro de <det>
-        const prod = det.getElementsByTagName('prod')[0];
-        if (prod) {
-          // Cria a nova tag <rastro>
-          const rastro = xmlDoc.createElement('rastro');
-          for (const [key, value] of Object.entries(rastroData)) {
-            const element = xmlDoc.createElement(key);
-            element.textContent = value;
-            rastro.appendChild(element);
-          }
+        // Somente adiciona a tag <rastro> se Fabricacao e Validade estiverem presentes
+        if (rastroData.dFab && rastroData.dVal) {
+          // Encontra a tag <prod> dentro de <det>
+          const prod = det.getElementsByTagName('prod')[0];
+          if (prod) {
+            // Cria a nova tag <rastro>
+            const rastro = xmlDoc.createElement('rastro');
+            for (const [key, value] of Object.entries(rastroData)) {
+              const element = xmlDoc.createElement(key);
+              element.textContent = value;
+              rastro.appendChild(element);
+            }
 
-          // Adiciona a nova tag <rastro> dentro de <prod>
-          prod.appendChild(rastro);
+            // Adiciona a nova tag <rastro> dentro de <prod>
+            prod.appendChild(rastro);
+          } else {
+            console.error('Tag <prod> não encontrada dentro de <det>');
+            return res.status(400).send('Tag <prod> não encontrada dentro de <det>');
+          }
         } else {
-          console.error('Tag <prod> não encontrada dentro de <det>');
-          return res.status(400).send('Tag <prod> não encontrada dentro de <det>');
+          console.log('Dados insuficientes para criar a tag <rastro>.');
         }
       } else {
         console.error('Formato inesperado de infAdProd:', infAdProdText);

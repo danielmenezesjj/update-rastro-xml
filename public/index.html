@@ -43,10 +43,10 @@
 </head>
 <body>
     <div class="container">
-        <h1>XML Uploader</h1>
+        <h1>Automatizar Processo do XML</h1>
         <form id="uploadForm">
             <input type="file" id="fileInput" accept=".xml" required />
-            <button type="submit">Update</button>
+            <button type="submit">Atualizar</button>
         </form>
     </div>
 
@@ -60,6 +60,8 @@
                 return;
             }
 
+            const fileName = fileInput.files[0].name;
+            const fileNameWithoutExtension = fileName.substring(0, fileName.lastIndexOf('.'));
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
 
@@ -78,7 +80,7 @@
                 const a = document.createElement('a');
                 a.style.display = 'none';
                 a.href = url;
-                a.download = 'updated.xml';
+                a.download = `${fileNameWithoutExtension}-atualizado.xml`;
                 document.body.appendChild(a);
                 a.click();
                 window.URL.revokeObjectURL(url);
