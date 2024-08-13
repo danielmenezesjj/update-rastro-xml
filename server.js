@@ -26,9 +26,9 @@ const formatDate = (dateStr) => {
 
 const initializeAuthentication = async () => {
   try {
-      await authenticateUser(); // Autentica o usuário ao iniciar o servidor
-      await updateAccessTokenPeriodically(); // Atualiza o token após autenticar
-      setInterval(updateAccessTokenPeriodically, 20 * 60 * 1000); // Atualiza a cada 20 minutos
+      await authenticateUser(); 
+      await updateAccessTokenPeriodically();
+      setInterval(updateAccessTokenPeriodically, 20 * 60 * 1000); 
   } catch (error) {
       console.error("Erro ao inicializar a autenticação:", error);
   }
@@ -64,7 +64,7 @@ const makeAuthenticatedRequest = async (url, token, method = 'GET', body = null)
 
   return response.json();
 };
-// Endpoint para processar o upload de arquivo XML
+
 app.post('/process-xml', upload.single('file'), (req, res) => {
   if (!req.file) {
     return res.status(400).send('Nenhum arquivo foi enviado');
@@ -72,12 +72,12 @@ app.post('/process-xml', upload.single('file'), (req, res) => {
 
   const xml = req.file.buffer.toString();
 
-  // Cria um novo DOMParser e XMLSerializer
+
   const domParser = new DOMParser();
   const xmlDoc = domParser.parseFromString(xml, 'text/xml');
   const xmlSerializer = new XMLSerializer();
 
-  // Encontra as tags <det>
+
   const dets = xmlDoc.getElementsByTagName('det');
   for (let i = 0; i < dets.length; i++) {
     const det = dets[i];
@@ -87,7 +87,6 @@ app.post('/process-xml', upload.single('file'), (req, res) => {
 
       console.log('Conteúdo de infAdProd:', infAdProdText);
 
-      // Extrai as informações de infAdProd usando regex
       const regex = /Lote:\s*(.*?)\s*Quantidade:\s*(\S+)(?:\s*Fabricacao:\s*(\d{2}\/\d{2}\/\d{4}))?(?:\s*Validade:\s*(\d{2}\/\d{2}\/\d{4}))?/;
       const match = infAdProdText.match(regex);
       if (match) {
@@ -100,12 +99,9 @@ app.post('/process-xml', upload.single('file'), (req, res) => {
 
         console.log('Dados extraídos para rastro:', rastroData);
 
-        // Somente adiciona a tag <rastro> se Fabricacao e Validade estiverem presentes
         if (rastroData.dFab && rastroData.dVal) {
-          // Encontra a tag <prod> dentro de <det>
           const prod = det.getElementsByTagName('prod')[0];
           if (prod) {
-            // Cria a nova tag <rastro>
             const rastro = xmlDoc.createElement('rastro');
             for (const [key, value] of Object.entries(rastroData)) {
               const element = xmlDoc.createElement(key);
@@ -113,7 +109,6 @@ app.post('/process-xml', upload.single('file'), (req, res) => {
               rastro.appendChild(element);
             }
 
-            // Adiciona a nova tag <rastro> dentro de <prod>
             prod.appendChild(rastro);
           } else {
             console.error('Tag <prod> não encontrada dentro de <det>');
@@ -129,10 +124,8 @@ app.post('/process-xml', upload.single('file'), (req, res) => {
     }
   }
 
-  // Converte o XML atualizado de volta para string
   const updatedXml = xmlSerializer.serializeToString(xmlDoc);
 
-  // Configura a resposta para download do arquivo
   res.setHeader('Content-Disposition', 'attachment; filename="updated.xml"');
   res.setHeader('Content-Type', 'application/xml');
   res.send(updatedXml);
@@ -145,12 +138,10 @@ app.post('/process-xml-text', express.json(), (req, res) => {
     return res.status(400).send('Nenhum XML foi enviado');
   }
 
-  // Cria um novo DOMParser e XMLSerializer
   const domParser = new DOMParser();
   const xmlDoc = domParser.parseFromString(xml, 'text/xml');
   const xmlSerializer = new XMLSerializer();
 
-  // Encontra as tags <det>
   const dets = xmlDoc.getElementsByTagName('det');
   for (let i = 0; i < dets.length; i++) {
     const det = dets[i];
@@ -160,7 +151,6 @@ app.post('/process-xml-text', express.json(), (req, res) => {
 
       console.log('Conteúdo de infAdProd:', infAdProdText);
 
-      // Extrai as informações de infAdProd usando regex
       const regex = /Lote:\s*(.*?)\s*Quantidade:\s*(\S+)(?:\s*Fabricacao:\s*(\d{2}\/\d{2}\/\d{4}))?(?:\s*Validade:\s*(\d{2}\/\d{2}\/\d{4}))?/;
       const match = infAdProdText.match(regex);
       if (match) {
@@ -173,12 +163,9 @@ app.post('/process-xml-text', express.json(), (req, res) => {
 
         console.log('Dados extraídos para rastro:', rastroData);
 
-        // Somente adiciona a tag <rastro> se Fabricacao e Validade estiverem presentes
         if (rastroData.dFab && rastroData.dVal) {
-          // Encontra a tag <prod> dentro de <det>
           const prod = det.getElementsByTagName('prod')[0];
           if (prod) {
-            // Cria a nova tag <rastro>
             const rastro = xmlDoc.createElement('rastro');
             for (const [key, value] of Object.entries(rastroData)) {
               const element = xmlDoc.createElement(key);
@@ -186,7 +173,6 @@ app.post('/process-xml-text', express.json(), (req, res) => {
               rastro.appendChild(element);
             }
 
-            // Adiciona a nova tag <rastro> dentro de <prod>
             prod.appendChild(rastro);
           } else {
             console.error('Tag <prod> não encontrada dentro de <det>');
@@ -202,10 +188,8 @@ app.post('/process-xml-text', express.json(), (req, res) => {
     }
   }
 
-  // Converte o XML atualizado de volta para string
   const updatedXml = xmlSerializer.serializeToString(xmlDoc);
 
-  // Configura a resposta para download do arquivo
   res.setHeader('Content-Disposition', 'attachment; filename="updated.xml"');
   res.setHeader('Content-Type', 'application/xml');
   res.send(updatedXml);
